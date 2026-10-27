@@ -1,0 +1,37 @@
+# リポジトリ全体を GitHub のページ機能で公開する。
+# Settings > Pages > Source を「GitHub Actions」にすると動く。
+name: Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: 問い合わせ先が仮のままなら止める
+        run: |
+          if grep -rq "CONTACT_EMAIL" --include=*.html .; then
+            echo "CONTACT_EMAIL（仮の文字）が残っています。アドレスに置き換えてから公開してください。"
+            exit 1
+          fi
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - id: deployment
+        uses: actions/deploy-pages@v4
